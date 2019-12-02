@@ -75,12 +75,12 @@ view model =
                 [ p []
                     [ text <|
                         "01: "
-                            ++ String.fromInt (Maybe.withDefault -999 (Array.get 0 (runWholeProgram array)))
+                            ++ String.fromInt (Maybe.withDefault -999 (Array.get 0 (runWholeProgram array 12 2)))
                     ]
                 , p []
                     [ text <|
                         "02: "
-                            ++ String.fromInt 5
+                            ++ printInputsAndAnswer array
                     ]
                 ]
 
@@ -137,7 +137,7 @@ runProgramStep array readingPosition =
                     Array.empty
 
                 Just newArray ->
-                    runProgramStep (Debug.log "newArray: " newArray) (currentPos + 4)
+                    runProgramStep newArray (currentPos + 4)
     in
     case Array.get readingPosition array of
         Nothing ->
@@ -160,10 +160,58 @@ runProgramStep array readingPosition =
             Array.empty
 
 
-runWholeProgram : Array Int -> Array Int
-runWholeProgram array =
+runWholeProgram : Array Int -> Int -> Int -> Array Int
+runWholeProgram array noun verb =
     let
         initArray =
-            array |> Array.set 1 12 |> Array.set 2 2
+            array |> Array.set 1 noun |> Array.set 2 verb
     in
-    runProgramStep (Debug.log "array" initArray) 0
+    runProgramStep initArray 0
+
+
+possibleInputs : List ( Int, Int )
+possibleInputs =
+    let
+        values =
+            List.range 0 99
+    in
+    List.concatMap (\one -> List.map (Tuple.pair one) values) values
+
+
+checkResult : Array Int -> Bool
+checkResult array =
+    case Array.get 0 array of
+        Nothing ->
+            False
+
+        Just value ->
+            value == 19690720
+
+
+testInputsToGet19690720 : Array Int -> Maybe ( Int, Int )
+testInputsToGet19690720 array =
+    let
+        foo : ( Int, Int ) -> Maybe ( Int, Int ) -> Maybe ( Int, Int )
+        foo newInput inputFound =
+            case ( inputFound, newInput ) of
+                ( Just input, _ ) ->
+                    Just input
+
+                ( Nothing, ( noun, verb ) ) ->
+                    if runWholeProgram array noun verb |> checkResult then
+                        Just ( noun, verb )
+
+                    else
+                        Nothing
+    in
+    List.foldl foo Nothing possibleInputs
+
+
+printInputsAndAnswer : Array Int -> String
+printInputsAndAnswer array =
+    case testInputsToGet19690720 array of
+        Nothing ->
+            "Error"
+
+        Just ( noun, verb ) ->
+            String.fromInt noun ++ ", " ++ String.fromInt verb ++ " -> " ++ String.fromInt (100 * noun + verb)
