@@ -72,11 +72,12 @@ view model =
                 [ p []
                     [ text <|
                         "01: "
-                            ++ String.fromInt numberOfValidPasswords
+                            ++ String.fromInt (numberOfValidPasswords isValidOne)
                     ]
                 , p []
                     [ text <|
                         "02: "
+                            ++ String.fromInt (numberOfValidPasswords isValidTwo)
                     ]
                 ]
 
@@ -123,6 +124,24 @@ pairs list =
     zip list (List.drop 1 list)
 
 
+type alias Four =
+    { one : Int, two : Int, three : Int, four : Int }
+
+
+preprocess : Int -> List Four
+preprocess number =
+    let
+        rec acc remaining =
+            case remaining of
+                one :: two :: three :: four :: rest ->
+                    rec (Four one two three four :: acc) (List.drop 1 remaining)
+
+                _ ->
+                    acc
+    in
+    rec [] (-1 :: digits number ++ [ 10 ])
+
+
 type alias Rules =
     { adjacent : Bool
     , monotony : Bool
@@ -134,8 +153,8 @@ validRules rules =
     rules.adjacent && rules.monotony
 
 
-isValid : Int -> Bool
-isValid number =
+isValidOne : Int -> Bool
+isValidOne number =
     let
         adjacents =
             pairs <| digits number
@@ -154,8 +173,27 @@ isValid number =
     List.foldl foo (Rules False True) adjacents |> validRules
 
 
-numberOfValidPasswords : Int
-numberOfValidPasswords =
+isValidTwo : Int -> Bool
+isValidTwo number =
+    let
+        foo : Four -> Rules -> Rules
+        foo four rules =
+            if not rules.monotony then
+                rules
+
+            else if rules.adjacent then
+                Rules True (four.two <= four.three)
+
+            else
+                Rules
+                    (four.one /= four.two && four.two == four.three && four.three /= four.four)
+                    (four.two <= four.three)
+    in
+    List.foldl foo (Rules False True) (preprocess number) |> validRules
+
+
+numberOfValidPasswords : (Int -> Bool) -> Int
+numberOfValidPasswords isValid =
     List.range first last
         |> List.foldl
             (\n acc ->
