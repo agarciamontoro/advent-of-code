@@ -72,15 +72,20 @@ view model =
             text "Malformed input"
 
         Success ( oneWire, anotherWire ) ->
+            let
+                solution =
+                    solve oneWire anotherWire
+            in
             div []
                 [ p []
                     [ text <|
                         "01: "
-                            ++ String.fromInt (solveOne oneWire anotherWire)
+                            ++ String.fromInt (Tuple.first solution)
                     ]
                 , p []
                     [ text <|
                         "02: "
+                            ++ String.fromInt (Tuple.second solution)
                     ]
                 ]
 
@@ -241,15 +246,59 @@ manhattanDistance ( a, b ) =
     abs a + abs b
 
 
-distanceFromClosest : List Coordinate -> List Coordinate -> Int
-distanceFromClosest one two =
-    Set.intersect (Set.fromList (List.map toTuple one)) (Set.fromList (List.map toTuple two))
-        |> Set.map manhattanDistance
+numberOfSteps : List ( Int, ( Int, Int ) ) -> ( Int, Int ) -> Int
+numberOfSteps list coord =
+    case List.head (List.filter (\x -> Tuple.second x == coord) list) of
+        Nothing ->
+            -1
+
+        Just ( idx, ( lat, lon ) ) ->
+            idx
+
+
+distanceFromClosestAndMinSteps : List Coordinate -> List Coordinate -> ( Int, Int )
+distanceFromClosestAndMinSteps one two =
+    let
+        oneTuple =
+            List.map toTuple one
+
+        oneTupleIndexed =
+            List.indexedMap Tuple.pair oneTuple
+
+        twoTuple =
+            List.map toTuple two
+
+        twoTupleIndexed =
+            List.indexedMap Tuple.pair twoTuple
+
+        intersections =
+            Set.intersect (Set.fromList oneTuple) (Set.fromList twoTuple)
+
+        intersectionsList =
+            Set.toList intersections
+
+        oneSteps =
+            List.map (numberOfSteps oneTupleIndexed) intersectionsList
+
+        twoSteps =
+            List.map (numberOfSteps twoTupleIndexed) intersectionsList
+
+        minSteps =
+            2
+                + Maybe.withDefault -3
+                    (zip oneSteps twoSteps
+                        |> List.map (\x -> Tuple.first x + Tuple.second x)
+                        |> List.minimum
+                    )
+    in
+    ( Set.map manhattanDistance intersections
         |> Set.toList
         |> List.minimum
         |> Maybe.withDefault -1
+    , minSteps
+    )
 
 
-solveOne : List Direction -> List Direction -> Int
-solveOne one two =
-    distanceFromClosest (generateWire one) (generateWire two)
+solve : List Direction -> List Direction -> ( Int, Int )
+solve one two =
+    distanceFromClosestAndMinSteps (generateWire one) (generateWire two)
