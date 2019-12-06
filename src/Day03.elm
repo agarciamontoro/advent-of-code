@@ -58,54 +58,35 @@ parse text =
 
 
 type alias Coordinate =
-    { lat : Int
-    , lon : Int
-    }
-
-
-fromTuple : ( Int, Int ) -> Coordinate
-fromTuple t =
-    Coordinate (Tuple.first t) (Tuple.second t)
-
-
-toTuple : Coordinate -> ( Int, Int )
-toTuple c =
-    ( c.lat, c.lon )
-
-
-toString : Coordinate -> String
-toString c =
-    "(" ++ String.fromInt c.lat ++ ", " ++ String.fromInt c.lon ++ ")"
-
-
-plusOne : Int -> Int
-plusOne n =
-    n + 1
-
-
-minusOne : Int -> Int
-minusOne n =
-    n - 1
+    ( Int, Int )
 
 
 genSide : Coordinate -> Direction -> List Coordinate
 genSide first direction =
     case direction of
         Up n ->
-            List.map fromTuple <|
-                Utils.zip (Utils.genList first.lat n plusOne) (List.repeat n first.lon)
+            Utils.genList
+                first
+                n
+                (\c -> ( Tuple.first c + 1, Tuple.second first ))
 
         Down n ->
-            List.map fromTuple <|
-                Utils.zip (Utils.genList first.lat n minusOne) (List.repeat n first.lon)
+            Utils.genList
+                first
+                n
+                (\c -> ( Tuple.first c - 1, Tuple.second first ))
 
         Right n ->
-            List.map fromTuple <|
-                Utils.zip (List.repeat n first.lat) (Utils.genList first.lon n plusOne)
+            Utils.genList
+                first
+                n
+                (\c -> ( Tuple.first first, Tuple.second c + 1 ))
 
         Left n ->
-            List.map fromTuple <|
-                Utils.zip (List.repeat n first.lat) (Utils.genList first.lon n minusOne)
+            Utils.genList
+                first
+                n
+                (\c -> ( Tuple.first first, Tuple.second c - 1 ))
 
 
 generateWire : List Direction -> List Coordinate
@@ -118,17 +99,17 @@ generateWire directions =
                     List.append acc (genSide last direction)
 
                 Nothing ->
-                    genSide (Coordinate 0 0) direction
+                    genSide ( 0, 0 ) direction
     in
     List.foldl foo [] directions
 
 
-manhattanDistance : ( Int, Int ) -> Int
+manhattanDistance : Coordinate -> Int
 manhattanDistance ( a, b ) =
     abs a + abs b
 
 
-numberOfSteps : List ( Int, ( Int, Int ) ) -> ( Int, Int ) -> Int
+numberOfSteps : List ( Int, Coordinate ) -> Coordinate -> Int
 numberOfSteps list coord =
     case List.head (List.filter (\x -> Tuple.second x == coord) list) of
         Nothing ->
@@ -141,29 +122,23 @@ numberOfSteps list coord =
 distanceFromClosestAndMinSteps : List Coordinate -> List Coordinate -> ( Int, Int )
 distanceFromClosestAndMinSteps one two =
     let
-        oneTuple =
-            List.map toTuple one
+        oneIndexed =
+            List.indexedMap Tuple.pair one
 
-        oneTupleIndexed =
-            List.indexedMap Tuple.pair oneTuple
+        twoIndexed =
+            List.indexedMap Tuple.pair two
 
-        twoTuple =
-            List.map toTuple two
-
-        twoTupleIndexed =
-            List.indexedMap Tuple.pair twoTuple
+        oneSet =
+            Set.fromList one
 
         intersections =
-            Set.intersect (Set.fromList oneTuple) (Set.fromList twoTuple)
-
-        intersectionsList =
-            Set.toList intersections
+            List.filter (\c -> Set.member c oneSet) two
 
         oneSteps =
-            List.map (numberOfSteps oneTupleIndexed) intersectionsList
+            List.map (numberOfSteps oneIndexed) intersections
 
         twoSteps =
-            List.map (numberOfSteps twoTupleIndexed) intersectionsList
+            List.map (numberOfSteps twoIndexed) intersections
 
         minSteps =
             2
@@ -173,8 +148,7 @@ distanceFromClosestAndMinSteps one two =
                         |> List.minimum
                     )
     in
-    ( Set.map manhattanDistance intersections
-        |> Set.toList
+    ( List.map manhattanDistance intersections
         |> List.minimum
         |> Maybe.withDefault -1
     , minSteps
