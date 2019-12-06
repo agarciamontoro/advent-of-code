@@ -1,94 +1,7 @@
-module Main exposing (..)
+module Day03 exposing (solve)
 
-import Array exposing (Array)
-import Browser
-import Html exposing (Html, div, p, pre, text)
-import Http
 import Set
 import Utils
-
-
-
--- MAIN
-
-
-main =
-    Browser.element
-        { init = init
-        , update = update
-        , subscriptions = \model -> Sub.none
-        , view = view
-        }
-
-
-
--- MODEL
-
-
-type Model
-    = Loading
-    | Failure
-    | Success ( List Direction, List Direction )
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Loading
-    , Http.get
-        { url = "/input/03.txt"
-        , expect = Http.expectString GotText
-        }
-    )
-
-
-
--- UPDATE
-
-
-type Msg
-    = GotText (Result Http.Error String)
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        GotText (Ok fullText) ->
-            ( Success (parse fullText), Cmd.none )
-
-        GotText (Err _) ->
-            ( Failure, Cmd.none )
-
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    case model of
-        Loading ->
-            text "Waiting for input"
-
-        Failure ->
-            text "Malformed input"
-
-        Success ( oneWire, anotherWire ) ->
-            let
-                solution =
-                    solve oneWire anotherWire
-            in
-            div []
-                [ p []
-                    [ text <|
-                        "01: "
-                            ++ String.fromInt (Tuple.first solution)
-                    ]
-                , p []
-                    [ text <|
-                        "02: "
-                            ++ String.fromInt (Tuple.second solution)
-                    ]
-                ]
 
 
 type Direction
@@ -268,6 +181,19 @@ distanceFromClosestAndMinSteps one two =
     )
 
 
-solve : List Direction -> List Direction -> ( Int, Int )
-solve one two =
-    distanceFromClosestAndMinSteps (generateWire one) (generateWire two)
+solve : String -> ( String, String )
+solve text =
+    let
+        wires =
+            parse text
+
+        firstWire =
+            generateWire (Tuple.first wires)
+
+        secondWire =
+            generateWire (Tuple.second wires)
+
+        solution =
+            distanceFromClosestAndMinSteps firstWire secondWire
+    in
+    Tuple.mapBoth String.fromInt String.fromInt solution

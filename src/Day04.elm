@@ -1,86 +1,6 @@
-module Main exposing (..)
+module Day04 exposing (solve)
 
-import Array exposing (Array)
-import Browser
-import Html exposing (Html, div, p, pre, text)
-import Http
 import Utils
-
-
-
--- MAIN
-
-
-main =
-    Browser.element
-        { init = init
-        , update = update
-        , subscriptions = \model -> Sub.none
-        , view = view
-        }
-
-
-
--- MODEL
-
-
-type Model
-    = Loading
-    | Failure
-    | Success
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Success
-    , Cmd.none
-    )
-
-
-
--- UPDATE
-
-
-type Msg
-    = GotText (Result Http.Error String)
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        GotText (Ok fullText) ->
-            ( Success, Cmd.none )
-
-        GotText (Err _) ->
-            ( Failure, Cmd.none )
-
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    case model of
-        Loading ->
-            text "Waiting for input"
-
-        Failure ->
-            text "Malformed input"
-
-        Success ->
-            div []
-                [ p []
-                    [ text <|
-                        "01: "
-                            ++ String.fromInt (numberOfValidPasswords isValidOne)
-                    ]
-                , p []
-                    [ text <|
-                        "02: "
-                            ++ String.fromInt (numberOfValidPasswords isValidTwo)
-                    ]
-                ]
 
 
 first : Int
@@ -178,3 +98,15 @@ numberOfValidPasswords isValid =
                     acc
             )
             0
+
+
+solve : String -> ( String, String )
+solve _ =
+    let
+        one =
+            String.fromInt (numberOfValidPasswords isValidOne)
+
+        second =
+            String.fromInt (numberOfValidPasswords isValidTwo)
+    in
+    ( one, second )

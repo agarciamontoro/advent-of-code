@@ -1,89 +1,7 @@
-module Main exposing (..)
+module Day02 exposing (solve)
 
 import Array exposing (Array)
-import Browser
-import Html exposing (Html, div, p, pre, text)
-import Http
 import Utils
-
-
-
--- MAIN
-
-
-main =
-    Browser.element
-        { init = init
-        , update = update
-        , subscriptions = \model -> Sub.none
-        , view = view
-        }
-
-
-
--- MODEL
-
-
-type Model
-    = Loading
-    | Failure
-    | Success (Array Int)
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Loading
-    , Http.get
-        { url = "/input/02.txt"
-        , expect = Http.expectString GotText
-        }
-    )
-
-
-
--- UPDATE
-
-
-type Msg
-    = GotText (Result Http.Error String)
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        GotText (Ok fullText) ->
-            ( Success (Utils.parseArrayInt "," fullText), Cmd.none )
-
-        GotText (Err _) ->
-            ( Failure, Cmd.none )
-
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    case model of
-        Loading ->
-            text "Waiting for input"
-
-        Failure ->
-            text "Malformed input"
-
-        Success array ->
-            div []
-                [ p []
-                    [ text <|
-                        "01: "
-                            ++ String.fromInt (Maybe.withDefault -999 (Array.get 0 (runWholeProgram array 12 2)))
-                    ]
-                , p []
-                    [ text <|
-                        "02: "
-                            ++ printInputsAndAnswer array
-                    ]
-                ]
 
 
 type alias OpParams =
@@ -191,11 +109,27 @@ testInputsToGet19690720 array =
     List.foldl foo Nothing possibleInputs
 
 
-printInputsAndAnswer : Array Int -> String
-printInputsAndAnswer array =
+printAnswer : Array Int -> String
+printAnswer array =
     case testInputsToGet19690720 array of
         Nothing ->
             "Error"
 
         Just ( noun, verb ) ->
-            String.fromInt noun ++ ", " ++ String.fromInt verb ++ " -> " ++ String.fromInt (100 * noun + verb)
+            String.fromInt (100 * noun + verb)
+
+
+solve : String -> ( String, String )
+solve text =
+    let
+        array =
+            Utils.parseArrayInt "," text
+
+        first =
+            String.fromInt
+                (Maybe.withDefault -999 (Array.get 0 (runWholeProgram array 12 2)))
+
+        second =
+            printAnswer array
+    in
+    ( first, second )

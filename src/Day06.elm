@@ -1,90 +1,7 @@
-module Main exposing (..)
+module Day06 exposing (solve)
 
-import Array exposing (Array)
-import Browser
 import Dict exposing (Dict)
-import Html exposing (Html, div, p, pre, text)
-import Http
 import Utils
-
-
-
--- MAIN
-
-
-main =
-    Browser.element
-        { init = init
-        , update = update
-        , subscriptions = \model -> Sub.none
-        , view = view
-        }
-
-
-
--- MODEL
-
-
-type Model
-    = Loading
-    | Failure
-    | Success (List Orbit)
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Loading
-    , Http.get
-        { url = "/input/06.txt"
-        , expect = Http.expectString GotText
-        }
-    )
-
-
-
--- UPDATE
-
-
-type Msg
-    = GotText (Result Http.Error String)
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        GotText (Ok fullText) ->
-            ( Success (parse fullText), Cmd.none )
-
-        GotText (Err _) ->
-            ( Failure, Cmd.none )
-
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    case model of
-        Loading ->
-            text "Waiting for input"
-
-        Failure ->
-            text "Malformed input"
-
-        Success orbits ->
-            div []
-                [ p []
-                    [ text <|
-                        "01: "
-                            ++ String.fromInt (totalNumberOfOrbits orbits)
-                    ]
-                , p []
-                    [ text <|
-                        "02: "
-                            ++ String.fromInt (result (parents orbits))
-                    ]
-                ]
 
 
 type alias Children =
@@ -241,3 +158,18 @@ result parentsDict =
             count 0 zipped
     in
     List.length myLineage + List.length santasLineage - 2 * commonPathLength
+
+
+solve : String -> ( String, String )
+solve text =
+    let
+        orbits =
+            parse text
+
+        first =
+            String.fromInt (totalNumberOfOrbits orbits)
+
+        second =
+            String.fromInt (result (parents orbits))
+    in
+    ( first, second )

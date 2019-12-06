@@ -1,89 +1,7 @@
-module Main exposing (..)
+module Day05 exposing (solve)
 
 import Array exposing (Array)
-import Browser
-import Html exposing (Html, div, p, pre, text)
-import Http
 import Utils
-
-
-
--- MAIN
-
-
-main =
-    Browser.element
-        { init = init
-        , update = update
-        , subscriptions = \model -> Sub.none
-        , view = view
-        }
-
-
-
--- MODEL
-
-
-type Model
-    = Loading
-    | Failure
-    | Success (Array Int)
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Loading
-    , Http.get
-        { url = "/input/05.txt"
-        , expect = Http.expectString GotText
-        }
-    )
-
-
-
--- UPDATE
-
-
-type Msg
-    = GotText (Result Http.Error String)
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        GotText (Ok fullText) ->
-            ( Success (Utils.parseArrayInt "," fullText), Cmd.none )
-
-        GotText (Err _) ->
-            ( Failure, Cmd.none )
-
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    case model of
-        Loading ->
-            text "Waiting for input"
-
-        Failure ->
-            text "Malformed input"
-
-        Success array ->
-            div []
-                [ p []
-                    [ text <|
-                        "01: "
-                            ++ (Tuple.second (runProgram 1 array) |> List.head |> Maybe.map String.fromInt |> Maybe.withDefault "ERR")
-                    ]
-                , p []
-                    [ text <|
-                        "02: "
-                            ++ (Tuple.second (runProgram 5 array) |> List.head |> Maybe.map String.fromInt |> Maybe.withDefault "ERR")
-                    ]
-                ]
 
 
 type ParamMode
@@ -329,3 +247,18 @@ runProgramStep input outputs array readingPosition =
 runProgram : Int -> Array Int -> ( Array Int, List Int )
 runProgram input array =
     runProgramStep input [] array 0
+
+
+solve : String -> ( String, String )
+solve text =
+    let
+        array =
+            Utils.parseArrayInt "," text
+
+        getSolution input =
+            Tuple.second (runProgram input array)
+                |> List.head
+                |> Maybe.map String.fromInt
+                |> Maybe.withDefault "ERR"
+    in
+    ( getSolution 1, getSolution 5 )
