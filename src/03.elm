@@ -133,7 +133,7 @@ parseLine line =
 
 parse : String -> ( List Direction, List Direction )
 parse text =
-    case Debug.log "text: " <| String.lines text of
+    case String.lines text of
         one :: two :: empty :: [] ->
             ( parseLine one, parseLine two )
 
