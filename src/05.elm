@@ -76,11 +76,12 @@ view model =
                 [ p []
                     [ text <|
                         "01: "
-                            ++ (Tuple.second (runProgram array) |> List.head |> Maybe.map String.fromInt |> Maybe.withDefault "ERR")
+                            ++ (Tuple.second (runProgram 1 array) |> List.head |> Maybe.map String.fromInt |> Maybe.withDefault "ERR")
                     ]
                 , p []
                     [ text <|
                         "02: "
+                            ++ (Tuple.second (runProgram 5 array) |> List.head |> Maybe.map String.fromInt |> Maybe.withDefault "ERR")
                     ]
                 ]
 
@@ -95,6 +96,10 @@ type Instruction
     | Mul ParamMode ParamMode
     | Input
     | Output ParamMode
+    | JmpTrue ParamMode ParamMode
+    | JmpFalse ParamMode ParamMode
+    | LessThan ParamMode ParamMode
+    | Equal ParamMode ParamMode
     | Halt
 
 
@@ -149,6 +154,18 @@ parseInstruction number =
                 |> Maybe.andThen parseMode
                 |> Maybe.map Output
 
+        5 ->
+            parseModePair JmpTrue
+
+        6 ->
+            parseModePair JmpFalse
+
+        7 ->
+            parseModePair LessThan
+
+        8 ->
+            parseModePair Equal
+
         99 ->
             Just Halt
 
@@ -167,11 +184,6 @@ resolveParameter program readingPosition mode =
                 |> Maybe.andThen (\pos -> Array.get pos program)
 
 
-input : Int
-input =
-    1
-
-
 type alias InstructionOutput =
     { array : Maybe (Array Int)
     , output : Maybe Int
@@ -179,8 +191,8 @@ type alias InstructionOutput =
     }
 
 
-runInstruction : Array Int -> Int -> Instruction -> InstructionOutput
-runInstruction array instructionPosition instruction =
+runInstruction : Int -> Array Int -> Int -> Instruction -> InstructionOutput
+runInstruction input array instructionPosition instruction =
     case instruction of
         Sum mode1 mode2 ->
             InstructionOutput
@@ -216,6 +228,62 @@ runInstruction array instructionPosition instruction =
                 (resolveParameter array (instructionPosition + 1) mode)
                 (Just <| instructionPosition + 2)
 
+        JmpTrue mode1 mode2 ->
+            InstructionOutput
+                (Just array)
+                Nothing
+                (Maybe.andThen
+                    (\i1 ->
+                        if i1 /= 0 then
+                            resolveParameter array (instructionPosition + 2) mode2
+
+                        else
+                            Just <| instructionPosition + 3
+                    )
+                    (resolveParameter array (instructionPosition + 1) mode1)
+                )
+
+        JmpFalse mode1 mode2 ->
+            InstructionOutput
+                (Just array)
+                Nothing
+                (Maybe.andThen
+                    (\i1 ->
+                        if i1 == 0 then
+                            resolveParameter array (instructionPosition + 2) mode2
+
+                        else
+                            Just <| instructionPosition + 3
+                    )
+                    (resolveParameter array (instructionPosition + 1) mode1)
+                )
+
+        LessThan mode1 mode2 ->
+            InstructionOutput
+                (Maybe.map3
+                    (\i1 i2 dst ->
+                        Array.set dst (Utils.ifThenElse (i1 < i2) 1 0) array
+                    )
+                    (resolveParameter array (instructionPosition + 1) mode1)
+                    (resolveParameter array (instructionPosition + 2) mode2)
+                    (resolveParameter array (instructionPosition + 3) Immediate)
+                )
+                Nothing
+                (Just <| instructionPosition + 4)
+
+        Equal mode1 mode2 ->
+            InstructionOutput
+                (Maybe.map3
+                    (\i1 i2 dst ->
+                        Array.set dst (Utils.ifThenElse (i1 == i2) 1 0) array
+                    )
+                    (resolveParameter array (instructionPosition + 1) mode1)
+                    (resolveParameter array (instructionPosition + 2) mode2)
+                    (resolveParameter array (instructionPosition + 3) Immediate)
+                )
+                Nothing
+                (Just <| instructionPosition + 4)
+
         Halt ->
             InstructionOutput (Just array) Nothing Nothing
 
@@ -230,8 +298,8 @@ addOutput maybeInt outputs =
             value :: outputs
 
 
-runProgramStep : List Int -> Array Int -> Int -> ( Array Int, List Int )
-runProgramStep outputs array readingPosition =
+runProgramStep : Int -> List Int -> Array Int -> Int -> ( Array Int, List Int )
+runProgramStep input outputs array readingPosition =
     let
         decideNextStep : InstructionOutput -> ( Array Int, List Int )
         decideNextStep out =
@@ -249,15 +317,15 @@ runProgramStep outputs array readingPosition =
                             ( newArray, newOutput )
 
                         Just newReadingPosition ->
-                            runProgramStep newOutput newArray newReadingPosition
+                            runProgramStep input newOutput newArray newReadingPosition
     in
     Array.get readingPosition array
         |> Maybe.andThen parseInstruction
-        |> Maybe.map (runInstruction array readingPosition)
+        |> Maybe.map (runInstruction input array readingPosition)
         |> Maybe.map decideNextStep
         |> Maybe.withDefault ( Array.empty, [] )
 
 
-runProgram : Array Int -> ( Array Int, List Int )
-runProgram array =
-    runProgramStep [] array 0
+runProgram : Int -> Array Int -> ( Array Int, List Int )
+runProgram input array =
+    runProgramStep input [] array 0

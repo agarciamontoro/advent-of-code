@@ -13,7 +13,13 @@ parseArrayInt separator text =
 
 parseListInt : String -> String -> List Int
 parseListInt separator text =
-    List.filterMap String.toInt <| String.split separator text
+    let
+        preprocessed =
+            ifThenElse (String.endsWith "\n" text)
+                (String.dropRight 1 text)
+                text
+    in
+    List.filterMap String.toInt <| String.split separator preprocessed
 
 
 digits : Int -> List Int
@@ -80,3 +86,12 @@ genList first num f =
 lastElement : List a -> Maybe a
 lastElement l =
     List.head <| List.reverse l
+
+
+ifThenElse : Bool -> a -> a -> a
+ifThenElse bool ifTrue ifFalse =
+    if bool then
+        ifTrue
+
+    else
+        ifFalse
