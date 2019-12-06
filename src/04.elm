@@ -4,6 +4,7 @@ import Array exposing (Array)
 import Browser
 import Html exposing (Html, div, p, pre, text)
 import Http
+import Utils
 
 
 
@@ -92,36 +93,9 @@ last =
     718098
 
 
-digits : Int -> List Int
-digits number =
-    let
-        decompose acc current =
-            case current // 10 of
-                0 ->
-                    current :: acc
-
-                new ->
-                    decompose (remainderBy 10 current :: acc) new
-    in
-    decompose [] number
-
-
-zip : List a -> List b -> List ( a, b )
-zip as_ bs_ =
-    case ( as_, bs_ ) of
-        ( [], _ ) ->
-            []
-
-        ( _, [] ) ->
-            []
-
-        ( a :: xa, b :: xb ) ->
-            ( a, b ) :: zip xa xb
-
-
 pairs : List a -> List ( a, a )
 pairs list =
-    zip list (List.drop 1 list)
+    Utils.zip list (List.drop 1 list)
 
 
 type alias Four =
@@ -139,7 +113,7 @@ preprocess number =
                 _ ->
                     acc
     in
-    rec [] (-1 :: digits number ++ [ 10 ])
+    rec [] (-1 :: Utils.digits number ++ [ 10 ])
 
 
 type alias Rules =
@@ -157,7 +131,7 @@ isValidOne : Int -> Bool
 isValidOne number =
     let
         adjacents =
-            pairs <| digits number
+            pairs <| Utils.digits number
 
         foo : ( Int, Int ) -> Rules -> Rules
         foo ( one, two ) rules =

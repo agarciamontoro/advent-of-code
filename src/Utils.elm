@@ -6,14 +6,14 @@ import Html exposing (Html, div, p, pre, text)
 import Http
 
 
-parseArrayInt : String -> Array Int
-parseArrayInt text =
-    Array.fromList <| parseListInt text
+parseArrayInt : String -> String -> Array Int
+parseArrayInt separator text =
+    Array.fromList <| parseListInt separator text
 
 
-parseListInt : String -> List Int
-parseListInt text =
-    List.filterMap String.toInt <| String.split "," text
+parseListInt : String -> String -> List Int
+parseListInt separator text =
+    List.filterMap String.toInt <| String.split separator text
 
 
 digits : Int -> List Int
@@ -51,3 +51,32 @@ zip as_ bs_ =
 
         ( a :: xa, b :: xb ) ->
             ( a, b ) :: zip xa xb
+
+
+flip : (a -> b -> c) -> b -> a -> c
+flip f ib ia =
+    f ia ib
+
+
+flippedGet : Array a -> Int -> Maybe a
+flippedGet =
+    flip Array.get
+
+
+genList : a -> Int -> (a -> a) -> List a
+genList first num f =
+    let
+        rec : List a -> a -> Int -> List a
+        rec current last count =
+            if count >= num then
+                current
+
+            else
+                rec (f last :: current) (f last) (count + 1)
+    in
+    rec [] first 0 |> List.reverse
+
+
+lastElement : List a -> Maybe a
+lastElement l =
+    List.head <| List.reverse l

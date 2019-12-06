@@ -52,7 +52,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotText (Ok fullText) ->
-            ( Success (parse fullText), Cmd.none )
+            ( Success (Utils.parseArrayInt "," fullText), Cmd.none )
 
         GotText (Err _) ->
             ( Failure, Cmd.none )
@@ -76,25 +76,13 @@ view model =
                 [ p []
                     [ text <|
                         "01: "
-                            ++ (Tuple.second (runProgram array) |> List.map String.fromInt |> String.join ", ")
+                            ++ (Tuple.second (runProgram array) |> List.head |> Maybe.map String.fromInt |> Maybe.withDefault "ERR")
                     ]
                 , p []
                     [ text <|
                         "02: "
                     ]
                 ]
-
-
-parse : String -> Array Int
-parse text =
-    let
-        stringList =
-            String.split "," text
-
-        intList =
-            List.filterMap String.toInt stringList
-    in
-    Array.fromList intList
 
 
 type ParamMode

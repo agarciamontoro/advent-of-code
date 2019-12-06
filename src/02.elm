@@ -4,6 +4,7 @@ import Array exposing (Array)
 import Browser
 import Html exposing (Html, div, p, pre, text)
 import Http
+import Utils
 
 
 
@@ -51,7 +52,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotText (Ok fullText) ->
-            ( Success (parse fullText), Cmd.none )
+            ( Success (Utils.parseArrayInt "," fullText), Cmd.none )
 
         GotText (Err _) ->
             ( Failure, Cmd.none )
@@ -85,18 +86,6 @@ view model =
                 ]
 
 
-parse : String -> Array Int
-parse text =
-    let
-        stringList =
-            String.split "," text
-
-        intList =
-            List.filterMap String.toInt stringList
-    in
-    Array.fromList intList
-
-
 type alias OpParams =
     { src1 : Int
     , src2 : Int
@@ -104,16 +93,11 @@ type alias OpParams =
     }
 
 
-flippedGet : Array a -> Int -> Maybe a
-flippedGet arr pos =
-    Array.get pos arr
-
-
 readOpParams : Array Int -> Int -> Maybe OpParams
 readOpParams array opPosition =
     Maybe.map3 OpParams
-        (Array.get (opPosition + 1) array |> Maybe.andThen (flippedGet array))
-        (Array.get (opPosition + 2) array |> Maybe.andThen (flippedGet array))
+        (Array.get (opPosition + 1) array |> Maybe.andThen (Utils.flippedGet array))
+        (Array.get (opPosition + 2) array |> Maybe.andThen (Utils.flippedGet array))
         (Array.get (opPosition + 3) array)
 
 

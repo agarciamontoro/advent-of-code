@@ -5,6 +5,7 @@ import Browser
 import Html exposing (Html, div, p, pre, text)
 import Http
 import Set
+import Utils
 
 
 
@@ -164,20 +165,6 @@ toString c =
     "(" ++ String.fromInt c.lat ++ ", " ++ String.fromInt c.lon ++ ")"
 
 
-genList : a -> Int -> (a -> a) -> List a
-genList first num f =
-    let
-        rec : List a -> a -> Int -> List a
-        rec current last count =
-            if count >= num then
-                current
-
-            else
-                rec (f last :: current) (f last) (count + 1)
-    in
-    rec [] first 0 |> List.reverse
-
-
 plusOne : Int -> Int
 plusOne n =
     n + 1
@@ -188,42 +175,24 @@ minusOne n =
     n - 1
 
 
-zip : List a -> List b -> List ( a, b )
-zip as_ bs_ =
-    case ( as_, bs_ ) of
-        ( [], _ ) ->
-            []
-
-        ( _, [] ) ->
-            []
-
-        ( a :: xa, b :: xb ) ->
-            ( a, b ) :: zip xa xb
-
-
 genSide : Coordinate -> Direction -> List Coordinate
 genSide first direction =
     case direction of
         Up n ->
             List.map fromTuple <|
-                zip (genList first.lat n plusOne) (List.repeat n first.lon)
+                Utils.zip (Utils.genList first.lat n plusOne) (List.repeat n first.lon)
 
         Down n ->
             List.map fromTuple <|
-                zip (genList first.lat n minusOne) (List.repeat n first.lon)
+                Utils.zip (Utils.genList first.lat n minusOne) (List.repeat n first.lon)
 
         Right n ->
             List.map fromTuple <|
-                zip (List.repeat n first.lat) (genList first.lon n plusOne)
+                Utils.zip (List.repeat n first.lat) (Utils.genList first.lon n plusOne)
 
         Left n ->
             List.map fromTuple <|
-                zip (List.repeat n first.lat) (genList first.lon n minusOne)
-
-
-lastElement : List a -> Maybe a
-lastElement l =
-    List.head <| List.reverse l
+                Utils.zip (List.repeat n first.lat) (Utils.genList first.lon n minusOne)
 
 
 generateWire : List Direction -> List Coordinate
@@ -231,7 +200,7 @@ generateWire directions =
     let
         foo : Direction -> List Coordinate -> List Coordinate
         foo direction acc =
-            case lastElement acc of
+            case Utils.lastElement acc of
                 Just last ->
                     List.append acc (genSide last direction)
 
@@ -286,7 +255,7 @@ distanceFromClosestAndMinSteps one two =
         minSteps =
             2
                 + Maybe.withDefault -3
-                    (zip oneSteps twoSteps
+                    (Utils.zip oneSteps twoSteps
                         |> List.map (\x -> Tuple.first x + Tuple.second x)
                         |> List.minimum
                     )

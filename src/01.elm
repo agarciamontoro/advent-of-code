@@ -3,6 +3,7 @@ module Main exposing (..)
 import Browser
 import Html exposing (Html, div, p, pre, text)
 import Http
+import Utils
 
 
 
@@ -50,7 +51,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotText (Ok fullText) ->
-            ( Success (parse fullText), Cmd.none )
+            ( Success (Utils.parseListInt "\n" fullText), Cmd.none )
 
         GotText (Err _) ->
             ( Failure, Cmd.none )
@@ -82,18 +83,6 @@ view model =
                             ++ String.fromInt (totalFuel list)
                     ]
                 ]
-
-
-parse : String -> List Int
-parse text =
-    let
-        stringList =
-            String.split "\n" text
-
-        intList =
-            List.filterMap String.toInt stringList
-    in
-    intList
 
 
 fuelFromMass : Int -> Int
