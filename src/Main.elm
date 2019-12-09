@@ -8,6 +8,7 @@ import Day03
 import Day04
 import Day05
 import Day06
+import Day08
 import Dict exposing (Dict)
 import Html exposing (Html, div, h3, li, p, pre, text, ul)
 import Http
@@ -40,6 +41,11 @@ type alias Model =
     { solutions : Dict Int State }
 
 
+notImplemented : String -> ( String, String )
+notImplemented _ =
+    ( "Not", "Implemented" )
+
+
 allSolvers : Array (String -> ( String, String ))
 allSolvers =
     Array.fromList
@@ -49,6 +55,8 @@ allSolvers =
         , Day04.solve
         , Day05.solve
         , Day06.solve
+        , notImplemented
+        , Day08.solve
         ]
 
 
@@ -116,8 +124,8 @@ viewSolution ( day, state ) =
             div []
                 [ h3 [] [ text <| "Day " ++ String.fromInt day ]
                 , ul []
-                    [ li [] [ text <| "01: " ++ sol1 ]
-                    , li [] [ text <| "02: " ++ sol2 ]
+                    [ li [] [ pre [] [ text <| sol1 ] ]
+                    , li [] [ pre [] [ text <| sol2 ] ]
                     ]
                 ]
 
