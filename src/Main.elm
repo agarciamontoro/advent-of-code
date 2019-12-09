@@ -9,6 +9,7 @@ import Day04
 import Day05
 import Day06
 import Day08
+import Day09
 import Dict exposing (Dict)
 import Html exposing (Html, div, h3, li, p, pre, text, ul)
 import Http
@@ -41,28 +42,23 @@ type alias Model =
     { solutions : Dict Int State }
 
 
-notImplemented : String -> ( String, String )
-notImplemented _ =
-    ( "Not", "Implemented" )
-
-
-allSolvers : Array (String -> ( String, String ))
+allSolvers : Dict Int (String -> ( String, String ))
 allSolvers =
-    Array.fromList
-        [ Day01.solve
-        , Day02.solve
-        , Day03.solve
-        , Day04.solve
-        , Day05.solve
-        , Day06.solve
-        , notImplemented
-        , Day08.solve
+    Dict.fromList
+        [ ( 1, Day01.solve )
+        , ( 2, Day02.solve )
+        , ( 3, Day03.solve )
+        , ( 4, Day04.solve )
+        , ( 5, Day05.solve )
+        , ( 6, Day06.solve )
+        , ( 8, Day08.solve )
+        , ( 9, Day09.solve )
         ]
 
 
 solver : Int -> (String -> ( String, String ))
 solver num =
-    Array.get (num - 1) allSolvers
+    Dict.get num allSolvers
         |> Maybe.withDefault (\s -> ( "Not", "implemented." ))
 
 
@@ -80,7 +76,7 @@ init _ =
                 }
     in
     ( Model Dict.empty
-    , List.range 1 (Array.length allSolvers)
+    , Dict.keys allSolvers
         |> List.map buildCommands
         |> Cmd.batch
     )

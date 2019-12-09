@@ -1,4 +1,4 @@
-module Day05 exposing (solve)
+module Day09 exposing (solve)
 
 import Array exposing (Array)
 import IntCodeComputer
@@ -23,7 +23,7 @@ solve text =
                 |> String.join ", "
 
         second =
-            IntCodeComputer.exec (computer [ 5 ])
+            IntCodeComputer.exec (computer [ 2 ])
                 |> .outputs
                 |> List.map String.fromInt
                 |> String.join ", "

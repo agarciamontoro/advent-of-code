@@ -15,9 +15,7 @@ parseListInt : String -> String -> List Int
 parseListInt separator text =
     let
         preprocessed =
-            ifThenElse (String.endsWith "\n" text)
-                (String.dropRight 1 text)
-                text
+            String.trim text
     in
     List.filterMap String.toInt <| String.split separator preprocessed
 
