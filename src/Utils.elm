@@ -93,3 +93,47 @@ ifThenElse bool ifTrue ifFalse =
 
     else
         ifFalse
+
+
+removeFirst : a -> List a -> List a
+removeFirst elem list =
+    let
+        helper prev remaining =
+            case remaining of
+                x :: xs ->
+                    if x == elem then
+                        List.append (List.reverse prev) xs
+
+                    else
+                        helper (x :: prev) xs
+
+                [] ->
+                    List.reverse prev
+    in
+    helper [] list
+
+
+permutations : List a -> List (List a)
+permutations elements =
+    let
+        helper : List a -> a -> List (List a)
+        helper list elem =
+            case removeFirst elem list of
+                [] ->
+                    [ [ elem ] ]
+
+                newList ->
+                    List.concatMap (helper newList) newList
+                        |> List.map ((::) elem)
+    in
+    List.concatMap (helper elements) elements
+
+
+isDefined : Maybe a -> Bool
+isDefined maybe =
+    case maybe of
+        Nothing ->
+            False
+
+        Just _ ->
+            True

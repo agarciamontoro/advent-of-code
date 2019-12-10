@@ -8,6 +8,7 @@ import Day03
 import Day04
 import Day05
 import Day06
+import Day07
 import Day08
 import Day09
 import Dict exposing (Dict)
@@ -51,6 +52,7 @@ allSolvers =
         , ( 4, Day04.solve )
         , ( 5, Day05.solve )
         , ( 6, Day06.solve )
+        , ( 7, Day07.solve )
         , ( 8, Day08.solve )
         , ( 9, Day09.solve )
         ]
