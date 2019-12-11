@@ -379,10 +379,33 @@ getInstruction computer =
         |> Maybe.andThen parseInstruction
 
 
+step : ComputerState -> ComputerState
+step computer =
+    runInstruction computer (getInstruction computer)
+
+
 exec : ComputerState -> ComputerState
 exec computer =
     if computer.finished then
         computer
 
     else
-        exec (runInstruction computer (getInstruction computer))
+        exec (step computer)
+
+
+consumeFirstOutput : ComputerState -> ( ComputerState, Maybe Int )
+consumeFirstOutput computer =
+    case ( computer.outputs, computer.finished ) of
+        ( [], True ) ->
+            ( computer, Nothing )
+
+        ( [], False ) ->
+            consumeFirstOutput (step computer)
+
+        ( output :: rest, _ ) ->
+            ( { computer | outputs = rest }, Just output )
+
+
+addInput : Int -> ComputerState -> ComputerState
+addInput input computer =
+    { computer | inputs = List.append computer.inputs [ input ] }

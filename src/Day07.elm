@@ -1,7 +1,7 @@
 module Day07 exposing (..)
 
 import Array exposing (Array)
-import IntCodeComputer
+import IntCodeComputer as ICC exposing (ComputerState)
 import Utils
 
 
@@ -15,16 +15,16 @@ type alias ConfiguredAmplifier =
 
 amplifier : Array Int -> Amplifier
 amplifier program phaseSetting input =
-    IntCodeComputer.init
-        |> IntCodeComputer.withProgram program
-        |> IntCodeComputer.withInputs [ phaseSetting, input ]
-        |> IntCodeComputer.exec
+    ICC.init
+        |> ICC.withProgram program
+        |> ICC.withInputs [ phaseSetting, input ]
+        |> ICC.exec
         |> .outputs
         |> List.head
 
 
-possibleSettings : List (List Int)
-possibleSettings =
+possibleSettingsLinear : List (List Int)
+possibleSettingsLinear =
     Utils.permutations <| List.range 0 4
 
 
@@ -43,12 +43,68 @@ runConfiguredAmplifiers configuredAmplifiers =
     List.foldl f (Just 0) configuredAmplifiers
 
 
-highestSignal : Array Int -> Maybe Int
-highestSignal program =
+highestSignalLinear : Array Int -> Maybe Int
+highestSignalLinear program =
     let
         allSignals =
-            List.map (configureAmplifiers program) possibleSettings
+            List.map (configureAmplifiers program) possibleSettingsLinear
                 |> List.map runConfiguredAmplifiers
+
+        goodSignals =
+            List.filterMap identity allSignals
+    in
+    if List.length allSignals == List.length goodSignals then
+        List.maximum goodSignals
+
+    else
+        Nothing
+
+
+possibleSettingsFeedback : List (List Int)
+possibleSettingsFeedback =
+    Utils.permutations <| List.range 5 9
+
+
+initAmplifierFeedback : Array Int -> Int -> ComputerState
+initAmplifierFeedback program phaseSetting =
+    ICC.init
+        |> ICC.withProgram program
+        |> ICC.withInputs [ phaseSetting ]
+
+
+configureAmplifiersFeedback : Array Int -> List Int -> List ComputerState
+configureAmplifiersFeedback program settings =
+    List.map (initAmplifierFeedback program) settings
+
+
+runFeedback : Int -> Maybe Int -> List ComputerState -> Maybe Int
+runFeedback input lastOutput amplifiers =
+    case amplifiers of
+        firstAmplifier :: rest ->
+            let
+                ( computer, output ) =
+                    ICC.addInput input firstAmplifier
+                        |> ICC.consumeFirstOutput
+            in
+            if computer.finished then
+                lastOutput
+
+            else
+                Maybe.andThen
+                    (\i -> runFeedback i output (List.append rest [ computer ]))
+                    output
+
+        [] ->
+            lastOutput
+
+
+highestSignalFeedback : Array Int -> Maybe Int
+highestSignalFeedback program =
+    let
+        allSignals =
+            possibleSettingsFeedback
+                |> List.map (configureAmplifiersFeedback program)
+                |> List.map (runFeedback 0 Nothing)
 
         goodSignals =
             List.filterMap identity allSignals
@@ -67,11 +123,13 @@ solve text =
             Utils.parseArrayInt "," text
 
         first =
-            highestSignal array
+            highestSignalLinear array
                 |> Maybe.map String.fromInt
                 |> Maybe.withDefault "ERR"
 
         second =
-            ""
+            highestSignalFeedback array
+                |> Maybe.map String.fromInt
+                |> Maybe.withDefault "ERR"
     in
     ( first, second )
